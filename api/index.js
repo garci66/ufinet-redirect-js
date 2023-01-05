@@ -28,7 +28,7 @@ const apiSytext= {
 function parseMultipleResults(sytexResults){
   var retVal=""
   for (var thisForm of sytexResults.results){
-    retVal+=`<li><a href='${SYTEX_BASE_URL}/o/2/${thisForm._url_display}'>${thisForm.network_element.name} - ${thisForm.status.name}</a></li>`
+    retVal+=`<li><a href='${SYTEX_BASE_URL}/o/2${thisForm._url_display}'>${thisForm.network_element.name} - ${thisForm.status.name}</a></li>`
   }
   return retVal
 }
@@ -56,7 +56,7 @@ export default async function (req) {
     }
     else if (sytextResponse.count==1){
       if (sytextResponse.results[0]._url_display){
-        myResponse = Response.redirect(SYTEX_BASE_URL+"/o/2/" + sytextResponse.results[0].uuid)
+        myResponse = Response.redirect(SYTEX_BASE_URL+"/o/2" + sytextResponse.results[0].uuid)
       }
       else {
         myResponse = new Response(`Hello, from ${req.url} - missing UUID`)
