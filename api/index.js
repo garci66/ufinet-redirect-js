@@ -1,4 +1,4 @@
-const SYTEX_QUERY_URL= process.env.UFINET_BASEURL + "/api/form/?" //?template=286&q=FLV01-A12-P06S3-C03
+const SYTEX_QUERY_URL= process.env.UFINET_BASEURL + "/api/" //?template=286&q=FLV01-A12-P06S3-C03
 const SYTEX_BASE_URL = process.env.UFINET_BASEURL
 const SYTEX_TOKEN = process.env.UFINET_TOKEN
 
@@ -8,11 +8,11 @@ export const config = {
   };
   
 const apiSytext= {
-  get: async (template, node) => {
+  get: async (path,queryObj) => {
     const sytexHeaders = new Headers();
     sytexHeaders.append('Authorization','Token ' + SYTEX_TOKEN);
     sytexHeaders.append('Content-Type', 'application/json');
-    const queryUrl = SYTEX_QUERY_URL + new URLSearchParams({template: template, q : node})
+    const queryUrl = SYTEX_QUERY_URL + path + '/?' + new URLSearchParams(queryObj)
 
 //    console.log("QueryURL inside promise: " + queryUrl +  "\nToken: " + SYTEX_TOKEN)
 
@@ -52,30 +52,41 @@ export default async function (req) {
   //console.log("template: " + myTemplateType + "\n name: " + myName)
 
   if (myTemplateType && myTemplateType.match(/^\d+$/) && myName && myName.match(/^[A-Z0-9\-]+$/)){
-    const sytextResponse = await apiSytext.get(myTemplateType,myName)
+    const sytextResponseNE = await apiSytext.get('networkelement',{ft_code: myName})
 
-    if (sytextResponse===null){
-      myResponse = new Response(`Hello, from ${req.url} - failed query`,{'status':408})
+    if (sytextResponseNE===null){
+      myResponse = new Response(`Hello, from ${req.url} - failed NE query`,{'status':408})
     }
-    else if (sytextResponse.count==0){
-      myResponse = new Response(`Hello, from ${req.url} - No results found`, {'status':404})
+    else if (sytextResponseNE.count==0){
+      myResponse = new Response(`Hello, from ${req.url} - No NE results found`, {'status':404})
     }
-    else if (sytextResponse.count==1){
-      if (sytextResponse.results[0]._url_display){
-        if (!myRo){
-          myResponse = Response.redirect(SYTEX_BASE_URL+"/o/"+sytextResponse.results[0].organization.id + sytextResponse.results[0]._url_display)
-        } else {
-          myResponse = Response.redirect(SYTEX_BASE_URL+"/d/f/" + sytextResponse.results[0].uuid)
+    else if (sytextResponseNE.count==1){
+      const sytextResponseForm = await apiSytext.get('form',{template:myTemplateType, network_element:sytextResponseNE.results[0].id})
+      if (sytextResponseForm===null){
+        myResponse = new Response(`Hello, from ${req.url} - failed FORM query`,{'status':408})
+      }
+      else if (sytextResponseForm.count==0){
+        myResponse = new Response(`Hello, from ${req.url} - No FORM results found`, {'status':404})
+      }
+      else if (sytextResponseForm.count==1){
+        if (sytextResponseForm.results[0]._url_display){
+          if (!myRo){
+            myResponse = Response.redirect(SYTEX_BASE_URL+"/o/"+sytextResponseForm.results[0].organization.id + sytextResponseForm.results[0]._url_display)
+          } else {
+            myResponse = Response.redirect(SYTEX_BASE_URL+"/d/f/" + sytextResponseForm.results[0].uuid)
+          }
+        }
+        else {
+          myResponse = new Response(`Hello, from ${req.url} - FORM result missing UUID`)
         }
       }
-      else {
-        myResponse = new Response(`Hello, from ${req.url} - missing UUID`)
+      else{
+        const myHeaders=new Headers()
+        myHeaders.append('Content-Type', 'text/html');
+        myResponse= new Response(`Multiples posibles opciones\nElija:\n${parseMultipleResults(sytextResponse,myRo)}`, {headers:myHeaders});
       }
-    }
-    else{
-      const myHeaders=new Headers()
-      myHeaders.append('Content-Type', 'text/html');
-      myResponse= new Response(`Multiples posibles opciones\nElija:\n${parseMultipleResults(sytextResponse,myRo)}`, {headers:myHeaders});
+    } else {
+      myResponse = new Response(`Hello, from ${req.url} - NE query failed or returned too many results`)
     }
   } else {
     myResponse = new Response(`Hello, from ${req.url} - invalid query parameters`,{'status':400})
