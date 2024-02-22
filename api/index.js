@@ -52,7 +52,7 @@ export default async function (req) {
   //console.log("template: " + myTemplateType + "\n name: " + myName)
 
   if (myTemplateType && myTemplateType.match(/^\d+$/) && myName && myName.match(/^[A-Z0-9\-]+$/)){
-    const sytextResponseNE = await apiSytext.get('networkelement',{ft_code: myName})
+    const sytextResponseNE = await apiSytext.get('networkelement/reduced',{code: myName})
 
     if (sytextResponseNE===null){
       myResponse = new Response(`Hello, from ${req.url} - failed NE query`,{'status':408})
