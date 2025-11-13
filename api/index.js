@@ -31,7 +31,7 @@ function parseMultipleResults(sytexResults,ro){
     if (ro){
       retVal+=`<li><a href='${SYTEX_BASE_URL}/d/f/${thisForm.uuid}'>${thisForm.network_element.name} - ${thisForm.status.name}</a></li>`
     } else {
-      retVal+=`<li><a href='${SYTEX_BASE_URL}/o/${thisForm.organization.id}${thisForm._url_display}'>${thisForm.network_element.name} - ${thisForm.status.name}</a></li>`
+      retVal+=`<li><a href='${SYTEX_BASE_URL}/o/${thisForm.organization}${thisForm._url_display}'>${thisForm.network_element.name} - ${thisForm.status.name}</a></li>`
     }
     
   }
@@ -71,7 +71,7 @@ export default async function (req) {
       else if (sytextResponseForm.count==1){
         if (sytextResponseForm.results[0]._url_display){
           if (!myRo){
-            myResponse = Response.redirect(SYTEX_BASE_URL+"/o/"+sytextResponseForm.results[0].organization.id + sytextResponseForm.results[0]._url_display)
+            myResponse = Response.redirect(SYTEX_BASE_URL+"/o/"+sytextResponseForm.results[0].organization + sytextResponseForm.results[0]._url_display)
           } else {
             myResponse = Response.redirect(SYTEX_BASE_URL+"/d/f/" + sytextResponseForm.results[0].uuid)
           }
